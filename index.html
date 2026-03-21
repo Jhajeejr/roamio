@@ -1,0 +1,1227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Roamio — Find your next trip</title>
+<script data-goatcounter="https://roamio.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #F0F4F8;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Nunito', sans-serif;
+  }
+
+  /* ── Phone frame ── */
+  .phone {
+    width: 390px;
+    height: 780px;
+    background: #F7F7F7;
+    border-radius: 44px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.15), 0 4px 12px rgba(0,0,0,0.08);
+    border: 1px solid #E0E0E0;
+  }
+
+  /* ── Base screen ── */
+  .screen {
+    position: absolute;
+    inset: 0;
+    background: #FFFFFF;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow-y: auto;
+  }
+  .screen.hidden { display: none; }
+
+  /* ── Status bar ── */
+  .status-bar {
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 28px;
+    color: #999;
+    font-size: 12px;
+    font-weight: 600;
+    background: #F7F7F7;
+  }
+  .status-logo { font-size: 15px; font-weight: 800; color: #58CC02; letter-spacing: -0.3px; }
+
+  /* ── Progress ── */
+  .progress-area { padding: 4px 28px 16px; background: #F7F7F7; }
+  .progress-meta { display: flex; justify-content: space-between; margin-bottom: 8px; color: #AAA; font-size: 12px; font-weight: 600; }
+  .progress-bar { height: 8px; background: #E8E8E8; border-radius: 8px; overflow: hidden; }
+  .progress-fill { height: 100%; background: #58CC02; border-radius: 8px; transition: width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+  /* ── Card area ── */
+  .card-area { position: relative; height: 420px; display: flex; align-items: center; justify-content: center; padding: 0 20px; }
+
+  .card-bg { position: absolute; width: 320px; height: 360px; border-radius: 24px; background: #fff; transition: all 0.3s ease; }
+  .card-bg.second { transform: scale(0.95) translateY(10px); opacity: 0.5; z-index: 1; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+  .card-bg.third  { transform: scale(0.9) translateY(20px);  opacity: 0.3; z-index: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+
+  .card {
+    position: absolute;
+    width: 330px;
+    min-height: 360px;
+    border-radius: 28px;
+    padding: 32px 24px 28px;
+    z-index: 10;
+    cursor: grab;
+    background: #FFFFFF;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.10), 0 2px 8px rgba(0,0,0,0.06);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    user-select: none;
+    will-change: transform;
+    border: 1.5px solid #F0F0F0;
+  }
+  .card:active { cursor: grabbing; }
+  .card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 6px; border-radius: 28px 28px 0 0; background: var(--card-color, #58CC02); }
+
+  .card-emoji    { font-size: 64px; margin-bottom: 16px; line-height: 1; }
+  .card-question { font-size: 20px; font-weight: 800; color: #2D2D2D; line-height: 1.3; margin-bottom: 10px; letter-spacing: -0.2px; }
+  .card-sub      { font-size: 14px; color: #AAA; line-height: 1.5; }
+
+  .swipe-indicator { position: absolute; top: 24px; padding: 7px 14px; border-radius: 10px; font-size: 16px; font-weight: 800; opacity: 0; transition: opacity 0.1s; letter-spacing: 1px; border: 2.5px solid; }
+  .swipe-yes { right: 20px; color: #58CC02; border-color: #58CC02; background: rgba(88,204,2,0.08); }
+  .swipe-no  { left: 20px;  color: #FF4B4B; border-color: #FF4B4B; background: rgba(255,75,75,0.08); }
+
+  /* ── Action area ── */
+  .action-area { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 0 28px; }
+  .hint-text { color: #C0C0C0; font-size: 12px; font-weight: 500; }
+  .buttons { display: flex; gap: 24px; align-items: center; }
+  .btn-no, .btn-yes { width: 72px; height: 72px; border-radius: 50%; border: none; cursor: pointer; font-size: 26px; display: flex; align-items: center; justify-content: center; transition: transform 0.15s ease, box-shadow 0.15s ease; -webkit-tap-highlight-color: transparent; }
+  .btn-no  { background: #FFF0F0; border: 2.5px solid #FF4B4B; color: #FF4B4B; box-shadow: 0 4px 12px rgba(255,75,75,0.15); }
+  .btn-yes { background: #58CC02; border: 2.5px solid #58CC02; color: #fff;    box-shadow: 0 4px 16px rgba(88,204,2,0.35); font-size: 28px; }
+  .btn-no:hover  { transform: scale(1.07); }
+  .btn-yes:hover { transform: scale(1.07); }
+  .btn-no:active, .btn-yes:active { transform: scale(0.94); }
+
+  /* ── Shared form styles ── */
+  .field-label { width: 100%; text-align: left; font-size: 11px; font-weight: 700; color: #AAA; letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 5px; }
+  .styled-select { width: 100%; padding: 13px 16px; border-radius: 14px; background: #F7F7F7; border: 2px solid #E8E8E8; color: #2D2D2D; font-size: 14px; font-weight: 600; margin-bottom: 12px; appearance: none; outline: none; cursor: pointer; transition: border-color 0.2s; }
+  .styled-select:focus { border-color: #58CC02; }
+  .styled-select.error { border-color: #FF4B4B; }
+  .styled-select option { color: #2D2D2D; background: #fff; }
+  .region-wrap { width: 100%; display: none; }
+  .region-wrap.visible { display: block; }
+
+  /* ── INTRO SCREEN ── */
+  .intro-inner { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 22px 28px; text-align: center; width: 100%; min-height: 100%; }
+  .intro-logo  { font-size: 26px; font-weight: 900; color: #58CC02; letter-spacing: -0.5px; margin-bottom: 4px; }
+  .intro-emoji { font-size: 48px; margin-bottom: 8px; }
+  .intro-title { font-size: 22px; font-weight: 800; color: #2D2D2D; margin-bottom: 4px; letter-spacing: -0.4px; }
+  .intro-sub   { font-size: 13px; color: #AAA; margin-bottom: 18px; line-height: 1.5; }
+
+  .btn-start { width: 100%; padding: 16px; border-radius: 16px; background: #1CB0F6; border: none; color: #fff; font-size: 16px; font-weight: 800; cursor: pointer; letter-spacing: 0.2px; transition: all 0.2s; box-shadow: 0 4px 16px rgba(28,176,246,0.35); margin-top: 4px; }
+  .btn-start:hover  { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(28,176,246,0.4); }
+  .btn-start:active { transform: translateY(0); }
+
+  /* ── SWIPE HELPER SCREEN ── */
+  .swipe-helper-inner { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 36px 28px; text-align: center; width: 100%; height: 100%; }
+  .helper-emoji { font-size: 56px; margin-bottom: 14px; }
+  .helper-title { font-size: 22px; font-weight: 800; color: #2D2D2D; margin-bottom: 8px; }
+  .helper-sub   { font-size: 13px; color: #AAA; margin-bottom: 28px; line-height: 1.55; }
+
+  .helper-row { display: flex; gap: 12px; margin-bottom: 28px; width: 100%; }
+  .helper-card { flex: 1; padding: 18px 12px; border-radius: 16px; text-align: center; }
+  .helper-card.no-side  { background: #FFF0F0; border: 2px solid #FF4B4B; }
+  .helper-card.yes-side { background: #F0FFF0; border: 2px solid #58CC02; }
+  .helper-card-icon { font-size: 30px; margin-bottom: 6px; }
+  .helper-card-dir  { font-size: 13px; font-weight: 800; margin-bottom: 4px; }
+  .helper-card.no-side  .helper-card-dir { color: #FF4B4B; }
+  .helper-card.yes-side .helper-card-dir { color: #58CC02; }
+  .helper-card-desc { font-size: 11px; color: #AAA; line-height: 1.4; }
+
+  .btn-got-it { width: 100%; padding: 16px; border-radius: 16px; background: #58CC02; border: none; color: #fff; font-size: 16px; font-weight: 800; cursor: pointer; box-shadow: 0 4px 16px rgba(88,204,2,0.35); transition: all 0.2s; }
+  .btn-got-it:hover { transform: translateY(-2px); }
+
+  /* ── RESULT SCREEN (single card) ── */
+  .result-screen-v2 { overflow: hidden; background: #F7F7F7; justify-content: flex-start; }
+
+  .result-header { width: 100%; background: #fff; padding: 14px 24px 12px; border-bottom: 1.5px solid #F0F0F0; text-align: center; flex-shrink: 0; }
+  .result-header-logo { font-size: 17px; font-weight: 900; color: #58CC02; }
+  .result-summary { font-size: 12px; color: #888; margin-top: 3px; font-weight: 500; line-height: 1.4; }
+
+  .result-body { padding: 14px 20px 16px; width: 100%; flex: 1; display: flex; flex-direction: column; overflow-y: auto; }
+
+  .dest-card { background: #fff; border-radius: 22px; padding: 22px 18px; border: 2px solid #F0F0F0; box-shadow: 0 4px 20px rgba(0,0,0,0.07); margin-bottom: 12px; animation: popIn 0.3s ease forwards; }
+  .dc-counter { font-size: 11px; color: #CCC; font-weight: 600; text-align: right; margin-bottom: 6px; }
+  .dc-top  { display: flex; align-items: center; gap: 14px; margin-bottom: 10px; }
+  .dc-emoji { font-size: 42px; flex-shrink: 0; }
+  .dc-info  { flex: 1; }
+  .dc-dest     { font-size: 20px; font-weight: 800; color: #2D2D2D; }
+  .dc-location { font-size: 12px; color: #999; font-weight: 500; margin-top: 1px; }
+  .dc-tag      { display: inline-block; font-size: 11px; font-weight: 700; color: #58CC02; background: rgba(88,204,2,0.10); padding: 3px 10px; border-radius: 20px; margin-top: 4px; }
+  .dc-why      { font-size: 13px; color: #777; line-height: 1.6; }
+  .dc-budget-note { font-size: 11px; color: #AAA; margin-top: 10px; padding-top: 10px; border-top: 1px solid #F0F0F0; }
+
+  .result-actions { display: flex; flex-direction: column; gap: 9px; margin-top: 2px; }
+
+  .btn-build-itinerary { width: 100%; padding: 15px; border-radius: 14px; background: #1CB0F6; border: none; color: #fff; font-size: 15px; font-weight: 800; cursor: pointer; box-shadow: 0 4px 14px rgba(28,176,246,0.3); transition: all 0.2s; }
+  .btn-build-itinerary:hover  { transform: translateY(-1px); }
+  .btn-build-itinerary:active { transform: scale(0.97); }
+
+  .nav-row { display: flex; gap: 8px; width: 100%; }
+  .btn-prev-dest { flex: 0 0 44px; padding: 13px 0; border-radius: 14px; background: #fff; border: 2px solid #E8E8E8; color: #888; font-size: 16px; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+  .btn-prev-dest:hover { border-color: #CCC; color: #555; }
+  .btn-next-dest { flex: 1; padding: 13px; border-radius: 14px; background: #fff; border: 2px solid #E8E8E8; color: #888; font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+  .btn-next-dest:hover { border-color: #CCC; color: #666; }
+
+  .btn-start-over-link { background: none; border: none; color: #CCC; font-size: 12px; font-weight: 600; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; padding: 6px; display: block; margin: 0 auto; }
+  .btn-start-over-link:hover { color: #AAA; }
+
+  .no-more-wrap { text-align: center; padding: 24px 0; }
+  .no-more-emoji { font-size: 44px; margin-bottom: 10px; }
+  .no-more-title { font-size: 16px; font-weight: 800; color: #2D2D2D; margin-bottom: 6px; }
+  .no-more-sub   { font-size: 13px; color: #AAA; margin-bottom: 18px; }
+  .btn-full { width: 100%; padding: 14px; border-radius: 14px; border: 2px solid #E8E8E8; background: #F7F7F7; color: #888; font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+
+  /* ── DATE PICKER SCREEN ── */
+  .datepicker-inner { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px 28px; width: 100%; height: 100%; text-align: center; }
+  .dp-emoji  { font-size: 50px; margin-bottom: 12px; }
+  .dp-title  { font-size: 22px; font-weight: 800; color: #2D2D2D; margin-bottom: 6px; }
+  .dp-sub    { font-size: 13px; color: #AAA; margin-bottom: 24px; line-height: 1.5; }
+  .dp-dest-name { color: #1CB0F6; font-weight: 700; }
+
+  .date-field-group { width: 100%; margin-bottom: 16px; }
+  .styled-date-input { width: 100%; padding: 13px 16px; border-radius: 14px; background: #F7F7F7; border: 2px solid #E8E8E8; color: #2D2D2D; font-size: 14px; font-weight: 600; outline: none; transition: border-color 0.2s; font-family: inherit; }
+  .styled-date-input:focus { border-color: #1CB0F6; }
+
+  .auto-end-date { margin-top: 8px; padding: 12px 16px; background: #F0FFF0; border-radius: 12px; font-size: 13px; color: #46A302; font-weight: 600; text-align: left; display: none; }
+  .auto-end-date.visible { display: block; }
+
+  .btn-confirm-dates { width: 100%; padding: 16px; border-radius: 16px; background: #58CC02; border: none; color: #fff; font-size: 16px; font-weight: 800; cursor: pointer; box-shadow: 0 4px 16px rgba(88,204,2,0.35); transition: all 0.2s; margin-top: 4px; }
+  .btn-confirm-dates:hover    { transform: translateY(-2px); }
+  .btn-confirm-dates:disabled { background: #C8C8C8; box-shadow: none; cursor: not-allowed; transform: none; }
+
+  .btn-back-link { background: none; border: none; color: #CCC; font-size: 13px; font-weight: 600; cursor: pointer; margin-top: 12px; text-decoration: underline; text-underline-offset: 3px; }
+
+  /* ── LOADING SCREEN ── */
+  .loading-inner { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px 28px; width: 100%; height: 100%; text-align: center; }
+  .loading-globe  { font-size: 56px; margin-bottom: 16px; display: inline-block; animation: spin 3s linear infinite; }
+  @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  .loading-title { font-size: 20px; font-weight: 800; color: #2D2D2D; margin-bottom: 8px; }
+  .loading-sub   { font-size: 14px; color: #AAA; line-height: 1.5; }
+  .loading-dest  { font-weight: 700; color: #1CB0F6; }
+  .loading-dots::after { content: ''; animation: dotdot 1.5s steps(4, end) infinite; }
+  @keyframes dotdot { 0%{content:''} 25%{content:'.'} 50%{content:'..'} 75%{content:'...'} 100%{content:''} }
+
+  /* ── ITINERARY SCREEN ── */
+  .itinerary-screen { overflow: hidden; background: #F7F7F7; justify-content: flex-start; }
+  .itin-header { width: 100%; background: #fff; padding: 14px 20px 12px; border-bottom: 1.5px solid #F0F0F0; flex-shrink: 0; display: flex; align-items: center; gap: 10px; }
+  .itin-back-btn { background: none; border: none; font-size: 20px; cursor: pointer; color: #AAA; padding: 4px 6px; flex-shrink: 0; border-radius: 8px; transition: background 0.15s; }
+  .itin-back-btn:hover { background: #F0F0F0; }
+  .itin-header-info { flex: 1; }
+  .itin-header-logo { font-size: 15px; font-weight: 900; color: #58CC02; }
+  .itin-header-dest { font-size: 12px; color: #AAA; font-weight: 600; margin-top: 1px; }
+
+  .itin-body { flex: 1; overflow-y: auto; padding: 14px 16px 100px; width: 100%; }
+  .itin-actions { position: absolute; bottom: 0; left: 0; right: 0; background: #fff; border-top: 1.5px solid #F0F0F0; padding: 12px 16px; display: flex; gap: 10px; }
+  .btn-whatsapp { flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; background: #25D366; color: #fff; font-size: 14px; font-weight: 700; border: none; border-radius: 14px; padding: 13px; cursor: pointer; text-decoration: none; }
+  .btn-whatsapp:hover { background: #20b857; }
+
+  .itin-card { background: #fff; border-radius: 18px; padding: 18px 16px; font-size: 13px; line-height: 1.75; color: #444; }
+  .itin-card .section-head { font-size: 14px; font-weight: 800; color: #2D2D2D; margin-top: 18px; margin-bottom: 6px; display: block; }
+  .itin-card .section-head:first-child { margin-top: 0; }
+  .itin-card .day-line { font-weight: 700; color: #2D2D2D; }
+
+  .itin-error { text-align: center; padding: 28px 0; }
+  .itin-error-emoji { font-size: 44px; margin-bottom: 12px; }
+  .itin-error-title { font-size: 16px; font-weight: 800; color: #2D2D2D; margin-bottom: 6px; }
+  .itin-error-sub   { font-size: 13px; color: #AAA; margin-bottom: 20px; line-height: 1.5; }
+  .btn-retry { padding: 13px 28px; border-radius: 12px; background: #1CB0F6; border: none; color: #fff; font-size: 14px; font-weight: 700; cursor: pointer; }
+  .itin-start-over  { background: none; border: none; color: #CCC; font-size: 13px; cursor: pointer; text-decoration: underline; margin-top: 14px; display: block; width: 100%; text-align: center; }
+
+  /* ── Animations ── */
+  @keyframes flyRight { to { transform: translateX(600px) rotate(28deg); opacity: 0; } }
+  @keyframes flyLeft  { to { transform: translateX(-600px) rotate(-28deg); opacity: 0; } }
+  @keyframes popIn    { from { transform: scale(0.88) translateY(8px); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  @keyframes bounceIn { 0%{transform:scale(0.7)}60%{transform:scale(1.05)}80%{transform:scale(0.97)}100%{transform:scale(1)} }
+
+  .fly-right { animation: flyRight 0.38s ease forwards; }
+  .fly-left  { animation: flyLeft  0.38s ease forwards; }
+  .pop-in    { animation: popIn    0.3s ease forwards; }
+  .bounce-in { animation: bounceIn 0.45s ease forwards; }
+</style>
+<!-- Destination database (all 5 parts) -->
+<script src="destinations/part1_domestic_north.js"></script>
+<script src="destinations/part2_domestic_south.js"></script>
+<script src="destinations/part3_domestic_west_east.js"></script>
+<script src="destinations/part4_international_asia.js"></script>
+<script src="destinations/part5_international_rest.js"></script>
+</head>
+<body>
+
+<div class="phone">
+
+  <!-- ══════════════════════════════════════
+       INTRO SCREEN
+  ══════════════════════════════════════ -->
+  <div class="screen" id="introScreen">
+    <div class="intro-inner">
+      <div class="intro-logo">Roamio ✈️</div>
+      <div class="intro-emoji">🌍</div>
+      <div class="intro-title">Where to next?</div>
+      <div class="intro-sub">7 quick swipes. We'll find your perfect trip.</div>
+
+      <div class="field-label">Your city</div>
+      <select class="styled-select" id="citySelect">
+        <option value="">📍 Travelling from...</option>
+        <option value="Delhi">Delhi</option>
+        <option value="Mumbai">Mumbai</option>
+        <option value="Bangalore">Bangalore</option>
+        <option value="Chennai">Chennai</option>
+        <option value="Hyderabad">Hyderabad</option>
+        <option value="Kolkata">Kolkata</option>
+        <option value="Pune">Pune</option>
+        <option value="Ahmedabad">Ahmedabad</option>
+        <option value="other">Somewhere else</option>
+      </select>
+
+      <div class="region-wrap" id="regionWrap">
+        <div class="field-label">Which region?</div>
+        <select class="styled-select" id="regionSelect">
+          <option value="">Pick your region...</option>
+          <option value="North India">North India (UP, Rajasthan, HP, UK, J&K)</option>
+          <option value="South India">South India (Karnataka, Kerala, TN, AP, Telangana)</option>
+          <option value="West India">West India (Maharashtra, Gujarat, Goa)</option>
+          <option value="East India">East India (WB, Odisha, Bihar, Jharkhand)</option>
+          <option value="Northeast India">Northeast India (Assam, Meghalaya, Sikkim etc.)</option>
+          <option value="Central India">Central India (MP, Chhattisgarh)</option>
+        </select>
+      </div>
+
+      <div class="field-label">Trip length</div>
+      <select class="styled-select" id="durationSelect">
+        <option value="">🗓 How long?</option>
+        <option value="weekend">Weekend escape (2–3 days)</option>
+        <option value="short">Short trip (4–5 days)</option>
+        <option value="week">Full week (6–8 days)</option>
+        <option value="long">10 days or more</option>
+      </select>
+
+      <div class="field-label">Budget per adult per day</div>
+      <select class="styled-select" id="budgetSelect">
+        <option value="">💰 What's your budget?</option>
+        <option value="tight">Less than ₹2,000/day</option>
+        <option value="mid">About ₹5,000/day</option>
+        <option value="premium">₹10,000 and more/day</option>
+      </select>
+
+      <button class="btn-start" id="startBtn">Let's find your trip →</button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       SWIPE HELPER SCREEN
+  ══════════════════════════════════════ -->
+  <div class="screen hidden" id="swipeHelperScreen">
+    <div class="swipe-helper-inner">
+      <div class="helper-emoji">👆</div>
+      <div class="helper-title">Here's how it works</div>
+      <div class="helper-sub">Swipe or use the buttons to answer 7 quick questions — we'll find your perfect trip!</div>
+
+      <div class="helper-row">
+        <div class="helper-card no-side">
+          <div class="helper-card-icon">👈</div>
+          <div class="helper-card-dir">Swipe Left</div>
+          <div class="helper-card-desc">Nope, not for me</div>
+        </div>
+        <div class="helper-card yes-side">
+          <div class="helper-card-icon">👉</div>
+          <div class="helper-card-dir">Swipe Right</div>
+          <div class="helper-card-desc">Yes, sounds like me!</div>
+        </div>
+      </div>
+
+      <button class="btn-got-it" id="gotItBtn">Got it — let's go! 🚀</button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       QUIZ SCREEN (not .screen — managed separately)
+  ══════════════════════════════════════ -->
+  <div id="quizScreen" style="display:none; flex-direction:column; height:100%; position:absolute; inset:0; z-index:50; background:#F7F7F7;">
+    <div class="status-bar">
+      <span>9:41</span>
+      <span class="status-logo">Roamio</span>
+      <span>●●●</span>
+    </div>
+
+    <div class="progress-area">
+      <div class="progress-meta">
+        <span id="progressLabel">Question 1 of 7</span>
+        <span id="progressPct">0%</span>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill" style="width:0%"></div>
+      </div>
+    </div>
+
+    <div class="card-area" id="cardArea">
+      <div class="card-bg third"></div>
+      <div class="card-bg second"></div>
+      <div class="card" id="mainCard" style="--card-color:#58CC02">
+        <div class="swipe-indicator swipe-yes" id="swipeYes">YES ✓</div>
+        <div class="swipe-indicator swipe-no"  id="swipeNo">NOPE ✗</div>
+        <div class="card-emoji"    id="cardEmoji">✈️</div>
+        <div class="card-question" id="cardQuestion"></div>
+        <div class="card-sub"      id="cardSub"></div>
+      </div>
+    </div>
+
+    <div class="action-area">
+      <div class="hint-text">swipe the card · or use buttons below</div>
+      <div class="buttons">
+        <button class="btn-no"  id="btnNo"  title="Nope">✗</button>
+        <button class="btn-yes" id="btnYes" title="Yes">✓</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       RESULT SCREEN — single card
+  ══════════════════════════════════════ -->
+  <div class="screen hidden result-screen-v2" id="resultScreen">
+    <div class="result-header">
+      <div class="result-header-logo">Roamio ✈️</div>
+      <div class="result-summary" id="resultSummary"></div>
+    </div>
+    <div class="result-body">
+      <div id="destCardWrap"></div>
+      <div class="result-actions" id="resultActions">
+        <button class="btn-build-itinerary" id="btnBuildItinerary">Build my itinerary 🗺️</button>
+        <div class="nav-row">
+          <button class="btn-prev-dest" id="btnPrevDest" style="display:none;">←</button>
+          <button class="btn-next-dest" id="btnNextDest">Naah, show me something else</button>
+        </div>
+        <button class="btn-start-over-link" id="btnStartOver">↺ Start over</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       DATE PICKER SCREEN
+  ══════════════════════════════════════ -->
+  <div class="screen hidden" id="datePickerScreen">
+    <div class="datepicker-inner">
+      <div class="dp-emoji">📅</div>
+      <div class="dp-title">When are you going?</div>
+      <div class="dp-sub">Pick your start date — we'll build the itinerary for <span class="dp-dest-name" id="dpDestName"></span></div>
+
+      <div class="date-field-group" style="width:100%;">
+        <div class="field-label">Start date</div>
+        <input type="date" class="styled-date-input" id="startDateInput">
+      </div>
+
+      <div class="date-field-group" id="endDateGroup" style="width:100%; display:none; margin-top:12px;">
+        <div class="field-label">Return date <span style="font-weight:400; color:#AAA;">(auto-filled, feel free to change)</span></div>
+        <input type="date" class="styled-date-input" id="endDateInput">
+      </div>
+
+      <button class="btn-confirm-dates" id="btnConfirmDates" disabled>Build my itinerary ✨</button>
+      <button class="btn-back-link" id="btnBackToResults">← Back to results</button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       LOADING SCREEN
+  ══════════════════════════════════════ -->
+  <div class="screen hidden" id="loadingScreen">
+    <div class="loading-inner">
+      <span class="loading-globe">🌍</span>
+      <div class="loading-title">Building your itinerary<span class="loading-dots"></span></div>
+      <div class="loading-sub">Crafting the perfect plan for <span class="loading-dest" id="loadingDestName"></span></div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       ITINERARY SCREEN
+  ══════════════════════════════════════ -->
+  <div class="screen hidden itinerary-screen" id="itineraryScreen">
+    <div class="itin-header">
+      <button class="itin-back-btn" id="itinBackBtn">←</button>
+      <div class="itin-header-info">
+        <div class="itin-header-logo">Roamio ✈️</div>
+        <div class="itin-header-dest" id="itinHeaderDest"></div>
+      </div>
+    </div>
+    <div class="itin-body" id="itinBody">
+      <!-- Itinerary content injected here -->
+    </div>
+    <div class="itin-actions" id="itinActions" style="display:none;">
+      <a class="btn-whatsapp" id="btnWhatsapp" href="#" target="_blank" rel="noopener">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+        Share on WhatsApp
+      </a>
+    </div>
+  </div>
+
+</div><!-- /phone -->
+
+<script>
+// ─────────────────────────────────────────────────────────────
+// GEMINI API — replace YOUR_KEY_HERE with your actual API key
+// ─────────────────────────────────────────────────────────────
+const GEMINI_API_KEY  = "AIzaSyBhTDAhnMq2uW8hsPbhCvOPRwFAYYeeBLE";
+const GEMINI_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
+
+// ─────────────────────────────────────────────────────────────
+// QUIZ QUESTIONS (7 cards)
+// ─────────────────────────────────────────────────────────────
+const questions = [
+  { emoji:"💑",   key:"isCouple",         question:"Just you and your partner on this trip?",                      sub:"A romantic getaway for two",                           color:"#FF9F43" },
+  { emoji:"⛰️",   key:"prefersMountains",  question:"Mountains and cool air over beaches?",                        sub:"Mist and pine vs. sun and sand",                       color:"#1CB0F6" },
+  { emoji:"👨‍👩‍👧",  key:"hasKidsOrElderly",  question:"Any kids or grandparents coming along?",                      sub:"Little ones or seniors who need easy terrain",          color:"#CE82FF" },
+  { emoji:"🛂",   key:"okVisa",            question:"Would you be okay going through a visa application process?",  sub:"Passport trips with visa requirements are fine",        color:"#58CC02" },
+  { emoji:"🧘",   key:"wantsChill",        question:"Zero itinerary — pure switch-off mode?",                      sub:"No checklists, no sightseeing, just vibes",             color:"#3DC8B8" },
+  { emoji:"🗺️",   key:"wantsOffbeat",      question:"Into something offbeat most people skip?",                    sub:"Hidden gem over the popular classic",                  color:"#FF6B6B" },
+  { emoji:"📅",   key:"soonTrip",          question:"Planning to travel within the next 3 months?",                sub:"Soon vs. still figuring out timing",                   color:"#1CB0F6" }
+];
+
+// ─────────────────────────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────────────────────────
+let answers        = {};
+let currentQ       = 0;
+let departureCity  = "";
+let departureRegion= "";
+let tripDuration   = "";
+let budgetLevel    = "";   // tight | mid | premium
+let isDragging     = false;
+let startX = 0, currentX = 0;
+let rankedRecs     = [];
+let currentRecIdx  = 0;
+let currentDest    = null;
+let tripStartDate  = null;
+let tripEndDate    = null;
+
+// ─────────────────────────────────────────────────────────────
+// HELPERS
+// ─────────────────────────────────────────────────────────────
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+  document.getElementById('quizScreen').style.display = 'none';
+  const el = document.getElementById(id);
+  if (el) el.classList.remove('hidden');
+}
+
+function showQuizScreen() {
+  document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+  const q = document.getElementById('quizScreen');
+  q.style.display = 'flex';
+}
+
+function getCityRegion(city) {
+  const map = {
+    Delhi:'North India', Mumbai:'West India', Pune:'West India', Ahmedabad:'West India',
+    Bangalore:'South India', Chennai:'South India', Hyderabad:'South India', Kolkata:'East India'
+  };
+  return map[city] || 'other';
+}
+
+function durationDays(dur) {
+  return { weekend:2, short:4, week:6, long:10 }[dur] || 4;
+}
+
+function durationLabel(dur) {
+  return { weekend:'2–3 day', short:'4–5 day', week:'6–8 day', long:'10+ day' }[dur] || '';
+}
+
+function budgetLabel(b) {
+  return { tight:'under ₹2k/day', mid:'~₹5k/day', premium:'₹10k+/day' }[b] || '';
+}
+
+function getVibe() {
+  if (answers.wantsChill && answers.prefersMountains) return 'mountain + relaxed';
+  if (answers.wantsChill)       return 'relaxed';
+  if (answers.wantsOffbeat)     return 'offbeat';
+  if (answers.prefersMountains) return 'mountains';
+  return 'adventure';
+}
+
+function getGroupType() {
+  if (answers.isCouple && !answers.hasKidsOrElderly) return 'couple';
+  if (answers.hasKidsOrElderly) return 'family';
+  return 'traveler';
+}
+
+function addDays(dateStr, days) {
+  const d = new Date(dateStr + 'T00:00:00');
+  d.setDate(d.getDate() + days - 1);
+  return d;
+}
+
+function formatDate(d) {
+  return d.toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' });
+}
+
+// ─────────────────────────────────────────────────────────────
+// INTRO
+// ─────────────────────────────────────────────────────────────
+const citySelect     = document.getElementById('citySelect');
+const regionWrap     = document.getElementById('regionWrap');
+const regionSelect   = document.getElementById('regionSelect');
+const durationSelect = document.getElementById('durationSelect');
+const budgetSelect   = document.getElementById('budgetSelect');
+
+citySelect.addEventListener('change', () => {
+  citySelect.classList.remove('error');
+  regionWrap.classList.toggle('visible', citySelect.value === 'other');
+  if (citySelect.value !== 'other') regionSelect.value = '';
+});
+
+document.getElementById('startBtn').addEventListener('click', () => {
+  const city     = citySelect.value;
+  const duration = durationSelect.value;
+  const region   = regionSelect.value;
+  const budget   = budgetSelect.value;
+  let valid = true;
+
+  [citySelect, durationSelect, budgetSelect, regionSelect].forEach(s => s.classList.remove('error'));
+
+  if (!city)     { citySelect.classList.add('error');     valid = false; }
+  if (!duration) { durationSelect.classList.add('error'); valid = false; }
+  if (!budget)   { budgetSelect.classList.add('error');   valid = false; }
+  if (city === 'other' && !region) { regionSelect.classList.add('error'); valid = false; }
+  if (!valid) return;
+
+  departureCity   = city === 'other' ? region : city;
+  departureRegion = city === 'other' ? region : getCityRegion(city);
+  tripDuration    = duration;
+  budgetLevel     = budget;
+
+  showScreen('swipeHelperScreen');
+});
+
+// ─────────────────────────────────────────────────────────────
+// SWIPE HELPER
+// ─────────────────────────────────────────────────────────────
+document.getElementById('gotItBtn').addEventListener('click', () => {
+  showQuizScreen();
+  loadQuestion(0);
+});
+
+// ─────────────────────────────────────────────────────────────
+// QUIZ
+// ─────────────────────────────────────────────────────────────
+function loadQuestion(index) {
+  const q    = questions[index];
+  const card = document.getElementById('mainCard');
+
+  document.getElementById('cardEmoji').textContent    = q.emoji;
+  document.getElementById('cardQuestion').textContent = q.question;
+  document.getElementById('cardSub').textContent      = q.sub;
+  card.style.setProperty('--card-color', q.color);
+
+  card.className = 'card pop-in';
+  setTimeout(() => card.classList.remove('pop-in'), 300);
+
+  document.getElementById('swipeYes').style.opacity = '0';
+  document.getElementById('swipeNo').style.opacity  = '0';
+  card.style.transform = '';
+
+  const pct = Math.round((index / questions.length) * 100);
+  document.getElementById('progressFill').style.width   = pct + '%';
+  document.getElementById('progressLabel').textContent  = `Question ${index + 1} of ${questions.length}`;
+  document.getElementById('progressPct').textContent    = pct + '%';
+}
+
+function answer(isYes) {
+  const q = questions[currentQ];
+  answers[q.key] = isYes;
+
+  const card = document.getElementById('mainCard');
+  card.classList.add(isYes ? 'fly-right' : 'fly-left');
+
+  setTimeout(() => {
+    card.style.transform = '';
+    card.className = 'card';
+    currentQ++;
+    if (currentQ >= questions.length) showResults();
+    else loadQuestion(currentQ);
+  }, 370);
+}
+
+document.getElementById('btnYes').addEventListener('click', () => answer(true));
+document.getElementById('btnNo').addEventListener('click',  () => answer(false));
+
+// Swipe drag
+const cardEl = document.getElementById('mainCard');
+cardEl.addEventListener('mousedown',  dragStart);
+cardEl.addEventListener('touchstart', dragStart, { passive: true });
+window.addEventListener('mousemove',  dragMove);
+window.addEventListener('touchmove',  dragMove, { passive: true });
+window.addEventListener('mouseup',    dragEnd);
+window.addEventListener('touchend',   dragEnd);
+
+function dragStart(e) {
+  isDragging = true;
+  startX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
+  cardEl.style.transition = 'none';
+}
+function dragMove(e) {
+  if (!isDragging) return;
+  currentX = (e.type === 'touchmove' ? e.touches[0].clientX : e.clientX) - startX;
+  const rot = currentX * 0.07;
+  cardEl.style.transform = `translateX(${currentX}px) rotate(${rot}deg)`;
+  const threshold = 55;
+  const yEl = document.getElementById('swipeYes');
+  const nEl = document.getElementById('swipeNo');
+  if (currentX > threshold) {
+    yEl.style.opacity = Math.min((currentX - threshold) / 70, 1);
+    nEl.style.opacity = '0';
+  } else if (currentX < -threshold) {
+    nEl.style.opacity = Math.min((-currentX - threshold) / 70, 1);
+    yEl.style.opacity = '0';
+  } else {
+    yEl.style.opacity = '0';
+    nEl.style.opacity = '0';
+  }
+}
+function dragEnd() {
+  if (!isDragging) return;
+  isDragging = false;
+  cardEl.style.transition = '';
+  if      (currentX >  100) answer(true);
+  else if (currentX < -100) answer(false);
+  else {
+    cardEl.style.transform = '';
+    document.getElementById('swipeYes').style.opacity = '0';
+    document.getElementById('swipeNo').style.opacity  = '0';
+  }
+  currentX = 0;
+}
+
+// ─────────────────────────────────────────────────────────────
+// WEB3FORMS — silent background submission
+// ─────────────────────────────────────────────────────────────
+function submitToWeb3Forms(actionTaken, destShown) {
+  try {
+    const payload = {
+      access_key:   '25bd972f-58b2-488a-b00d-ea5aad044028',
+      subject:      'Roamio Quiz Response',
+      from_name:    'Roamio App',
+      city:         departureCity,
+      region:       departureRegion,
+      duration:     tripDuration,
+      budget:       budgetLevel,
+      q_isCouple:         answers.isCouple,
+      q_prefersMountains: answers.prefersMountains,
+      q_hasKidsOrElderly: answers.hasKidsOrElderly,
+      q_okVisa:           answers.okVisa,
+      q_wantsChill:       answers.wantsChill,
+      q_wantsOffbeat:     answers.wantsOffbeat,
+      q_soonTrip:         answers.soonTrip,
+      top_rec:      destShown || (rankedRecs[0]?.destination ?? ''),
+      action_taken: actionTaken
+    };
+    fetch('https://api.web3forms.com/submit', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body:    JSON.stringify(payload)
+    }).catch(() => {}); // silent — never block the UI
+  } catch(e) {}
+}
+
+// ─────────────────────────────────────────────────────────────
+// RESULTS — single card
+// ─────────────────────────────────────────────────────────────
+function showResults() {
+  rankedRecs    = getRankedRecs();
+  currentRecIdx = 0;
+  showScreen('resultScreen');
+  renderResultCard();
+  submitToWeb3Forms('viewed_results', rankedRecs[0]?.destination ?? '');
+}
+
+function buildSummaryLine() {
+  const vibe = getVibe();
+  return `${durationLabel(tripDuration)} trip from ${departureCity} · ${budgetLabel(budgetLevel)} · ${vibe}`;
+}
+
+function renderResultCard() {
+  document.getElementById('resultSummary').textContent = buildSummaryLine();
+
+  const wrap    = document.getElementById('destCardWrap');
+  const actions = document.getElementById('resultActions');
+
+  if (currentRecIdx >= rankedRecs.length) {
+    wrap.innerHTML = `
+      <div class="no-more-wrap">
+        <div class="no-more-emoji">🤔</div>
+        <div class="no-more-title">That's all we've got!</div>
+        <div class="no-more-sub">We've shown all our top picks for your preferences.</div>
+      </div>`;
+    actions.innerHTML = `<button class="btn-full" onclick="resetAll()">↺ Start over with new preferences</button>`;
+    return;
+  }
+
+  const rec = rankedRecs[currentRecIdx];
+  currentDest = rec;
+  const counter = `${currentRecIdx + 1} of ${rankedRecs.length}`;
+
+  wrap.innerHTML = `
+    <div class="dest-card">
+      <div class="dc-counter">${counter}</div>
+      <div class="dc-top">
+        <div class="dc-emoji">${rec.emoji}</div>
+        <div class="dc-info">
+          <div class="dc-dest">${rec.destination}</div>
+          ${rec.location ? `<div class="dc-location">${rec.location}</div>` : ''}
+          <span class="dc-tag">${rec.tag}</span>
+        </div>
+      </div>
+      <div class="dc-why">${rec.why}</div>
+      ${rec.budget_note ? `<div class="dc-budget-note">💰 ${rec.budget_note}</div>` : ''}
+    </div>`;
+
+  // Show the action buttons (in case they were replaced by "no more")
+  const showPrev = currentRecIdx > 0;
+  actions.innerHTML = `
+    <button class="btn-build-itinerary" id="btnBuildItinerary">Build my itinerary 🗺️</button>
+    <div class="nav-row">
+      <button class="btn-prev-dest" id="btnPrevDest" style="${showPrev ? '' : 'display:none;'}">←</button>
+      <button class="btn-next-dest" id="btnNextDest">Naah, show me something else</button>
+    </div>
+    <button class="btn-start-over-link" id="btnStartOver">↺ Start over</button>`;
+
+  document.getElementById('btnBuildItinerary').addEventListener('click', () => {
+    submitToWeb3Forms('build_itinerary', rankedRecs[currentRecIdx]?.destination ?? '');
+    openDatePicker();
+  });
+  document.getElementById('btnNextDest').addEventListener('click', () => { currentRecIdx++; renderResultCard(); });
+  document.getElementById('btnStartOver').addEventListener('click', resetAll);
+  if (showPrev) {
+    document.getElementById('btnPrevDest').addEventListener('click', () => { currentRecIdx--; renderResultCard(); });
+  }
+}
+
+function openDatePicker() {
+  if (!currentDest) return;
+  document.getElementById('dpDestName').textContent   = currentDest.destination;
+  document.getElementById('startDateInput').value     = '';
+  document.getElementById('endDateInput').value       = '';
+  document.getElementById('endDateGroup').style.display = 'none';
+  document.getElementById('btnConfirmDates').disabled = true;
+  showScreen('datePickerScreen');
+}
+
+// ─────────────────────────────────────────────────────────────
+// DATE PICKER
+// ─────────────────────────────────────────────────────────────
+const startDateInput = document.getElementById('startDateInput');
+const endDateInput   = document.getElementById('endDateInput');
+const endDateGroup   = document.getElementById('endDateGroup');
+const confirmDatesBtn= document.getElementById('btnConfirmDates');
+
+// Minimum date = today
+const todayStr = new Date().toISOString().split('T')[0];
+startDateInput.setAttribute('min', todayStr);
+
+startDateInput.addEventListener('change', () => {
+  if (startDateInput.value) {
+    const days       = durationDays(tripDuration);
+    const autoEnd    = addDays(startDateInput.value, days);
+    const autoEndStr = autoEnd.toISOString().split('T')[0];
+
+    tripStartDate = startDateInput.value;
+    tripEndDate   = autoEndStr;
+
+    // Show end date input, pre-filled but editable
+    endDateInput.setAttribute('min', startDateInput.value);
+    endDateInput.value = autoEndStr;
+    endDateGroup.style.display = 'block';
+    confirmDatesBtn.disabled = false;
+  } else {
+    endDateGroup.style.display = 'none';
+    confirmDatesBtn.disabled = true;
+  }
+});
+
+endDateInput.addEventListener('change', () => {
+  if (endDateInput.value) {
+    tripEndDate = endDateInput.value;
+  }
+});
+
+confirmDatesBtn.addEventListener('click', () => {
+  if (!currentDest || !tripStartDate) return;
+  buildItinerary();
+});
+
+document.getElementById('btnBackToResults').addEventListener('click', () => {
+  showScreen('resultScreen');
+});
+
+// ─────────────────────────────────────────────────────────────
+// ITINERARY BUILDER — Gemini API
+// ─────────────────────────────────────────────────────────────
+async function buildItinerary() {
+  document.getElementById('loadingDestName').textContent = currentDest.destination;
+  showScreen('loadingScreen');
+
+  const days       = durationDays(tripDuration);
+  const groupType  = getGroupType();
+  const vibe       = getVibe();
+  const startFmt   = formatDate(new Date(tripStartDate + 'T00:00:00'));
+  const endFmt     = formatDate(new Date(tripEndDate   + 'T00:00:00'));
+
+  const budgetDesc = {
+    tight:   'under ₹2,000/day per person (budget stays, street food)',
+    mid:     'around ₹5,000/day per person (3-star hotels, good dining)',
+    premium: '₹10,000+/day per person (luxury hotels, fine dining)'
+  }[budgetLevel] || 'moderate budget';
+
+  const prompt = `You are a travel expert helping an Indian traveler plan a trip.
+
+TRIP DETAILS:
+- Destination: ${currentDest.destination}
+- Travelling from: ${departureCity}, India
+- Dates: ${startFmt} to ${endFmt} (${days} days)
+- Group: ${groupType}
+- Budget: ${budgetDesc}
+- Vibe: ${vibe}
+
+Write a SHORT, SCANNABLE itinerary under 500 words total. Use bullet points. No long paragraphs. Be specific with place names — no vague phrases.
+
+Use EXACTLY this structure:
+
+🗓️ DAY-BY-DAY PLAN
+- ${startFmt}: [One line — travel + arrival + one evening activity. Max 15 words.]
+[One bullet per day for all ${days} days. Each bullet: date + 2–3 activities, max 15 words.]
+
+🏨 WHERE TO STAY
+- [Area 1 — near tourist centre]: [One-line reason]
+- [Area 2 — offbeat/quieter]: [One-line reason]
+- [Area 3 — another option]: [One-line reason]
+
+🛍️ SHOPPING & MARKETS
+- [Market name]: [What to buy — 5 words max]
+[3–5 bullets]
+
+🍽️ RESTAURANTS TO TRY
+- [Restaurant name]: [Cuisine] · [Budget / Mid-range / Fine dining]
+[3–5 bullets]
+
+📍 PLACES NOT TO MISS
+- [Place name]: [Why — one short phrase]
+[5 bullets]
+
+🎒 TRAVEL CHECKLIST
+[ONLY destination-specific items. If beach: reef-safe sunscreen, rash guard. If jungle: mosquito repellent, leech socks. If mountains in winter: thermal layers, lip balm. If scuba: GoPro mount.
+DO NOT list: phone, wallet, passport, clothes, charger, medicines, or anything that applies to every trip.]`;
+
+  try {
+    const response = await fetch(`${GEMINI_ENDPOINT}?key=${GEMINI_API_KEY}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { temperature: 0.7, maxOutputTokens: 3000 }
+      })
+    });
+
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData.error?.message || `HTTP ${response.status}`);
+    }
+
+    const data = await response.json();
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!text) throw new Error('Empty response from Gemini');
+
+    displayItinerary(text);
+
+  } catch (err) {
+    displayItineraryError(err.message);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+// ANALYTICS — GoatCounter event helper (silent if not loaded)
+// ─────────────────────────────────────────────────────────────
+function trackEvent(path) {
+  try {
+    if (window.goatcounter?.count) {
+      window.goatcounter.count({ path, title: path, event: true });
+    }
+  } catch(e) {}
+}
+
+function displayItinerary(rawText) {
+  document.getElementById('itinHeaderDest').textContent =
+    `${currentDest.destination} · ${durationDays(tripDuration)} days`;
+  showScreen('itineraryScreen');
+
+  // Parse the raw text into formatted HTML
+  const html = parseItineraryToHTML(rawText);
+  document.getElementById('itinBody').innerHTML = `<div class="itin-card">${html}</div>`;
+
+  // Track itinerary generation
+  trackEvent('itinerary-generated');
+
+  // Build WhatsApp share link
+  const dest    = currentDest.destination;
+  const days    = durationDays(tripDuration);
+  const startFmt = formatDate(new Date(tripStartDate + 'T00:00:00'));
+  const endFmt   = formatDate(new Date(tripEndDate   + 'T00:00:00'));
+  const shareText = `🗺️ *${dest} — ${days}-day itinerary*\n📅 ${startFmt} → ${endFmt}\n\n${rawText}\n\n_Built with Roamio ✈️_`;
+  const waUrl  = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
+
+  const actionsEl = document.getElementById('itinActions');
+  const waBtn     = document.getElementById('btnWhatsapp');
+  waBtn.href      = waUrl;
+  actionsEl.style.display = 'flex';
+
+  waBtn.addEventListener('click', () => trackEvent('itinerary-shared-whatsapp'), { once: true });
+}
+
+function parseItineraryToHTML(text) {
+  // Escape HTML entities
+  let t = text
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;');
+
+  // Section headers (lines that start with specific emojis)
+  t = t.replace(/^(🗓️[^\n]*|📍[^\n]*|🛍️[^\n]*|🏨[^\n]*|🍽️[^\n]*|🎒[^\n]*)/gm,
+    '<span class="section-head">$1</span>');
+
+  // Day lines: "Day N —"
+  t = t.replace(/^(Day \d+\s*[—-][^\n]*)/gm, '<span class="day-line">$1</span>');
+
+  // Bold **text**
+  t = t.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+
+  // Bullet points — convert "- " at start of line
+  t = t.replace(/^[-•]\s+/gm, '&nbsp;&nbsp;• ');
+
+  // Newlines → <br>
+  t = t.replace(/\n/g, '<br>');
+
+  // Collapse triple+ line breaks
+  t = t.replace(/(<br>){3,}/g, '<br><br>');
+
+  return t;
+}
+
+function displayItineraryError(errMsg) {
+  document.getElementById('itinHeaderDest').textContent = currentDest?.destination || '';
+  showScreen('itineraryScreen');
+
+  const isKeyError = errMsg.toLowerCase().includes('api key') ||
+    errMsg.toLowerCase().includes('403') || errMsg.toLowerCase().includes('401');
+
+  document.getElementById('itinBody').innerHTML = `
+    <div class="itin-error">
+      <div class="itin-error-emoji">😕</div>
+      <div class="itin-error-title">Couldn't build the itinerary</div>
+      <div class="itin-error-sub">${isKeyError
+        ? 'Looks like the Gemini API key is missing or invalid. Add your key to the GEMINI_API_KEY constant at the top of the script.'
+        : 'Something went wrong: ' + errMsg + '. Please try again.'
+      }</div>
+      <button class="btn-retry" onclick="buildItinerary()">Try again</button>
+      <button class="itin-start-over" onclick="resetAll()">↺ Start over</button>
+    </div>`;
+}
+
+document.getElementById('itinBackBtn').addEventListener('click', () => {
+  document.getElementById('itinActions').style.display = 'none';
+  showScreen('datePickerScreen');
+});
+
+// ─────────────────────────────────────────────────────────────
+// RESET EVERYTHING
+// ─────────────────────────────────────────────────────────────
+function resetAll() {
+  answers        = {};
+  currentQ       = 0;
+  departureCity  = '';
+  departureRegion= '';
+  tripDuration   = '';
+  budgetLevel    = '';
+  rankedRecs     = [];
+  currentRecIdx  = 0;
+  currentDest    = null;
+  tripStartDate  = null;
+  tripEndDate    = null;
+
+  document.getElementById('citySelect').value     = '';
+  document.getElementById('durationSelect').value = '';
+  document.getElementById('budgetSelect').value   = '';
+  document.getElementById('regionSelect').value   = '';
+  document.getElementById('regionWrap').classList.remove('visible');
+  [citySelect, durationSelect, budgetSelect].forEach(s => s.classList.remove('error'));
+
+  showScreen('introScreen');
+}
+
+// ─────────────────────────────────────────────────────────────
+// RECOMMENDATION ENGINE
+// Returns a ranked array of destination objects
+// ─────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
+// DESTINATION DATABASE (loaded via <script src> tags above)
+// Combine all 5 parts into one array
+// ─────────────────────────────────────────────────────────────
+function getAllDestinations() {
+  const p1 = (typeof destinations_part1 !== 'undefined') ? destinations_part1 : [];
+  const p2 = (typeof destinations_part2 !== 'undefined') ? destinations_part2 : [];
+  const p3 = (typeof destinations_part3 !== 'undefined') ? destinations_part3 : [];
+  const p4 = (typeof destinations_part4 !== 'undefined') ? destinations_part4 : [];
+  const p5 = (typeof destinations_part5 !== 'undefined') ? destinations_part5 : [];
+  return [...p1, ...p2, ...p3, ...p4, ...p5];
+}
+
+function getDestEmoji(d) {
+  const m = { mountains:'🏔️', beach:'🏖️', nature:'🌿', culture:'🏛️', heritage:'🏯',
+              food:'🍜', adventure:'🎒', chill:'🌅', nightlife:'🎉', spiritual:'🙏',
+              pilgrimage:'🙏', offbeat:'🗺️', wildlife:'🐘', city:'🏙️', luxury:'💎', shopping:'🛍️' };
+  for (const t of (d.experience_types || [])) { if (m[t]) return m[t]; }
+  return '✈️';
+}
+
+function getDestTag(d, a, groupType) {
+  if (a.wantsOffbeat && d.scores.offbeat >= 4) return '🗺️ Hidden Gem';
+  if (a.isCouple && d.scores.romance >= 5)     return '💑 Most Romantic';
+  if (a.hasKidsOrElderly && d.scores.family_friendly >= 5) return '👨‍👩‍👧 Family Favourite';
+  if (groupType === 'solo' && d.scores.solo_friendly >= 5) return '🎒 Solo Favourite';
+  if (d.scores.adventure >= 5) return '⚡ Adventure Pick';
+  if (d.scores.nature >= 5)    return '🌿 Nature\'s Best';
+  if (d.scores.food >= 5)      return '🍜 Foodie\'s Dream';
+  if (d.scores.culture >= 5)   return '🏛️ Cultural Gem';
+  if (d.scores.spiritual >= 5) return '🙏 Spiritual Escape';
+  if (!d.international)        return '🇮🇳 Domestic Pick';
+  return '✈️ Top Pick';
+}
+
+function getRankedRecs() {
+  const a    = answers;
+  const city = departureCity;
+
+  // Weekend trips → always domestic
+  const isWeekend         = tripDuration === 'weekend';
+  const isBudgetConstrained = budgetLevel === 'tight';
+  const domestic          = isWeekend || isBudgetConstrained || !a.okVisa;
+
+  const userDays = durationDays(tripDuration);
+
+  // Determine group type
+  let groupType = 'friends';
+  if (a.isCouple && !a.hasKidsOrElderly)              groupType = 'couple';
+  else if (a.hasKidsOrElderly)                         groupType = 'family-kids';
+  else if (a.isCouple === false && a.hasKidsOrElderly === false) groupType = 'solo';
+
+  // Budget tier: which destination tiers are acceptable for each user tier
+  const acceptableTiers = {
+    tight:   ['tight', 'budget'],
+    mid:     ['budget', 'mid'],
+    premium: ['mid', 'premium']
+  }[budgetLevel] || ['budget', 'mid'];
+
+  // ── Filter destinations ──────────────────────────────────────
+  const all  = getAllDestinations();
+  const pool = all.filter(d => {
+    if (domestic && d.international) return false;
+    if (!domestic && !d.international) return false; // prefer international if allowed
+    const tierOK = d.budget.tiers.some(t => acceptableTiers.includes(t));
+    if (!tierOK) return false;
+    if (userDays < d.duration.min_days) return false;
+    if (userDays > d.duration.max_days) return false;
+    if (!d.group_fit.includes(groupType)) return false;
+    return true;
+  });
+
+  // Fallback: if international filter gives 0 results, include domestic too
+  let finalPool = pool;
+  if (!domestic && pool.length < 3) {
+    finalPool = all.filter(d => {
+      const tierOK = d.budget.tiers.some(t => acceptableTiers.includes(t));
+      if (!tierOK) return false;
+      if (userDays < d.duration.min_days) return false;
+      if (userDays > d.duration.max_days) return false;
+      if (!d.group_fit.includes(groupType)) return false;
+      return true;
+    });
+  }
+
+  // ── Score each destination ───────────────────────────────────
+  const scored = finalPool.map(d => {
+    const s = d.scores;
+    let score = 0;
+
+    // Couple preference
+    if (a.isCouple) score += s.romance * 3;
+
+    // Mountain vs beach
+    if (a.prefersMountains) {
+      score += s.nature * 2 + s.adventure;
+      if ((d.experience_types || []).includes('mountains')) score += 12;
+    } else {
+      score += s.food;
+      if ((d.experience_types || []).some(t => ['beach','city','food'].includes(t))) score += 8;
+    }
+
+    // Chill vs active
+    if (a.wantsChill) {
+      score += s.nature + s.spiritual;
+      if ((d.experience_types || []).includes('chill')) score += 10;
+    } else {
+      score += s.adventure;
+      if ((d.experience_types || []).includes('adventure')) score += 6;
+    }
+
+    // Offbeat
+    if (a.wantsOffbeat) {
+      score += s.offbeat * 4;
+      if ((d.experience_types || []).includes('offbeat')) score += 12;
+    }
+
+    // Family
+    if (a.hasKidsOrElderly) score += s.family_friendly * 3 + s.safety * 2;
+
+    // Solo
+    if (groupType === 'solo') score += s.solo_friendly * 2 + s.safety;
+
+    // Safety always matters
+    score += s.safety;
+
+    // Proximity bonus — closer from user's city scores higher
+    const proximityHours = (d.proximity_hours || {})[city];
+    if (proximityHours) score += Math.max(0, (10 - proximityHours) * 1.5);
+
+    return { ...d, _score: score, _groupType: groupType };
+  });
+
+  scored.sort((a, b) => b._score - a._score);
+
+  // ── Convert to result card format ────────────────────────────
+  return scored.map(d => ({
+    emoji:       getDestEmoji(d),
+    destination: d.name,
+    location:    d.state_country,
+    tag:         getDestTag(d, a, groupType),
+    why:         d.why_go,
+    budget_note: d.budget_note,
+    _score:      d._score
+  }));
+}
+
+</script>
+
+</body>
+</html>
