@@ -707,37 +707,6 @@ function dragEnd() {
 }
 
 // ─────────────────────────────────────────────────────────────
-// WEB3FORMS — silent background submission
-// ─────────────────────────────────────────────────────────────
-function submitToWeb3Forms(actionTaken, destShown) {
-  try {
-    const payload = {
-      access_key:   '25bd972f-58b2-488a-b00d-ea5aad044028',
-      subject:      'Roamio Quiz Response',
-      from_name:    'Roamio App',
-      city:         departureCity,
-      region:       departureRegion,
-      duration:     tripDuration,
-      budget:       budgetLevel,
-      q_isCouple:         answers.isCouple,
-      q_prefersMountains: answers.prefersMountains,
-      q_hasKidsOrElderly: answers.hasKidsOrElderly,
-      q_okVisa:           answers.okVisa,
-      q_wantsChill:       answers.wantsChill,
-      q_wantsOffbeat:     answers.wantsOffbeat,
-      q_soonTrip:         answers.soonTrip,
-      top_rec:      destShown || (rankedRecs[0]?.destination ?? ''),
-      action_taken: actionTaken
-    };
-    fetch('https://api.web3forms.com/submit', {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-      body:    JSON.stringify(payload)
-    }).catch(() => {}); // silent — never block the UI
-  } catch(e) {}
-}
-
-// ─────────────────────────────────────────────────────────────
 // RESULTS — single card
 // ─────────────────────────────────────────────────────────────
 function showResults() {
@@ -745,7 +714,6 @@ function showResults() {
   currentRecIdx = 0;
   showScreen('resultScreen');
   renderResultCard();
-  submitToWeb3Forms('viewed_results', rankedRecs[0]?.destination ?? '');
 }
 
 function buildSummaryLine() {
@@ -799,10 +767,7 @@ function renderResultCard() {
     </div>
     <button class="btn-start-over-link" id="btnStartOver">↺ Start over</button>`;
 
-  document.getElementById('btnBuildItinerary').addEventListener('click', () => {
-    submitToWeb3Forms('build_itinerary', rankedRecs[currentRecIdx]?.destination ?? '');
-    openDatePicker();
-  });
+  document.getElementById('btnBuildItinerary').addEventListener('click', openDatePicker);
   document.getElementById('btnNextDest').addEventListener('click', () => { currentRecIdx++; renderResultCard(); });
   document.getElementById('btnStartOver').addEventListener('click', resetAll);
   if (showPrev) {
