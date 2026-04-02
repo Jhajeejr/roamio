@@ -927,14 +927,22 @@ async function submitFeedback() {
   try {
     const payload = {
       access_key:  '25bd972f-58b2-488a-b00d-ea5aad044028',
-      subject:     'Roamio Feedback',
+      subject:     `Roamio Feedback — ${state.selectedRating}⭐ — ${state.currentDest?.name || 'N/A'}`,
+      // User identity
+      name:        state.name       || 'N/A',
+      // Feedback
       rating:      state.selectedRating,
-      message:     text || '(No message provided)',
+      message:     text             || '(No message provided)',
+      // Quiz choices
       destination: state.currentDest?.name || 'N/A',
-      from_city:   state.city    || 'N/A',
-      month:       state.month   || 'N/A',
-      who:         state.who     || 'N/A',
-      budget:      state.budget  || 'N/A',
+      from_city:   state.city       || 'N/A',
+      month:       state.month      || 'N/A',
+      who:         state.who        || 'N/A',
+      budget:      state.budget     || 'N/A',
+      duration:    state.duration   || 'N/A',
+      location:    state.location   || 'N/A',
+      vibe:        state.vibe       || 'N/A',
+      visa:        state.visa       || 'N/A',
     };
 
     const res    = await fetch('https://api.web3forms.com/submit', {
