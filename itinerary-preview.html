@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Itinerary Format Preview</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: #f3f4f6;
+      padding: 24px 16px;
+      color: #1a1a2e;
+    }
+
+    .page-title {
+      text-align: center;
+      font-size: 22px;
+      font-weight: 800;
+      margin-bottom: 6px;
+      color: #E8602C;
+    }
+    .page-sub {
+      text-align: center;
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 32px;
+    }
+
+    .option-label {
+      font-size: 18px;
+      font-weight: 800;
+      margin-bottom: 4px;
+      color: #1a1a2e;
+    }
+    .option-desc {
+      font-size: 13px;
+      color: #888;
+      margin-bottom: 14px;
+    }
+
+    .phone-frame {
+      background: #fff;
+      border-radius: 24px;
+      max-width: 390px;
+      margin: 0 auto 48px;
+      overflow: hidden;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.12);
+    }
+
+    /* ── SHARED HEADER ── */
+    .itin-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      background: #fff;
+      border-bottom: 1px solid #f0f0f0;
+      position: sticky;
+      top: 0;
+    }
+    .back-btn {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      background: #f5f5f5;
+      border: none;
+      font-size: 16px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .header-title { font-size: 16px; font-weight: 800; }
+
+    /* ══════════════════════════════════════
+       OPTION A — DAY CARDS
+    ══════════════════════════════════════ */
+    .option-a .scroll-area { padding: 16px; background: #FFF9F7; }
+
+    .dest-hero {
+      width: 100%;
+      height: 160px;
+      border-radius: 16px;
+      object-fit: cover;
+      display: block;
+      margin-bottom: 16px;
+      background: linear-gradient(135deg, #E8602C, #F4956A);
+      position: relative;
+      overflow: hidden;
+    }
+    .dest-hero-inner {
+      width: 100%; height: 100%;
+      display: flex; flex-direction: column;
+      align-items: flex-start; justify-content: flex-end;
+      padding: 16px;
+      background: linear-gradient(to top, rgba(0,0,0,0.55), transparent);
+      border-radius: 16px;
+    }
+    .dest-hero-name { font-size: 22px; font-weight: 800; color: #fff; }
+    .dest-hero-sub  { font-size: 12px; color: rgba(255,255,255,0.85); margin-top: 2px; }
+
+    .day-card {
+      background: #fff;
+      border-radius: 16px;
+      margin-bottom: 12px;
+      overflow: hidden;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    }
+    .day-card-header {
+      background: linear-gradient(135deg, #E8602C, #F4956A);
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .day-badge {
+      background: rgba(255,255,255,0.25);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 3px 10px;
+      border-radius: 20px;
+    }
+    .day-title { font-size: 13px; font-weight: 700; color: #fff; }
+
+    .day-card-body { padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
+    .time-slot { display: flex; gap: 10px; align-items: flex-start; }
+    .time-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+    .time-content {}
+    .time-label { font-size: 10px; font-weight: 700; color: #E8602C; text-transform: uppercase; letter-spacing: 0.5px; }
+    .time-text  { font-size: 13px; color: #444; line-height: 1.5; margin-top: 1px; }
+
+    .tips-card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 14px 16px;
+      margin-bottom: 12px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    }
+    .tips-title { font-size: 13px; font-weight: 800; color: #1a1a2e; margin-bottom: 10px; }
+    .tip-item { font-size: 12px; color: #555; line-height: 1.5; margin-bottom: 6px; padding-left: 14px; position: relative; }
+    .tip-item::before { content: '•'; position: absolute; left: 0; color: #E8602C; font-weight: 700; }
+
+    .stay-card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 14px 16px;
+      margin-bottom: 12px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    }
+    .stay-row { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 8px; }
+    .stay-badge { font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 20px; flex-shrink: 0; margin-top: 1px; }
+    .stay-badge.luxury { background: #FDE8DF; color: #E8602C; }
+    .stay-badge.budget { background: #e8f5e9; color: #2e7d32; }
+    .stay-text { font-size: 12px; color: #555; line-height: 1.5; }
+
+
+    /* ══════════════════════════════════════
+       OPTION B — TIMELINE
+    ══════════════════════════════════════ */
+    .option-b .scroll-area { padding: 0 16px 16px; background: #FFF9F7; }
+    .option-b .dest-hero { margin: 16px 0; }
+
+    .timeline { position: relative; padding-left: 28px; }
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 9px; top: 0; bottom: 0;
+      width: 2px;
+      background: linear-gradient(to bottom, #E8602C, #F4956A44);
+    }
+
+    .timeline-day { position: relative; margin-bottom: 20px; }
+    .timeline-dot {
+      position: absolute;
+      left: -24px;
+      top: 4px;
+      width: 18px; height: 18px;
+      border-radius: 50%;
+      background: #E8602C;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 9px;
+      font-weight: 800;
+      color: #fff;
+    }
+
+    .tl-day-label {
+      font-size: 11px;
+      font-weight: 800;
+      color: #E8602C;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+    .tl-day-title { font-size: 14px; font-weight: 800; color: #1a1a2e; margin-bottom: 8px; }
+
+    .tl-activity {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 7px 10px;
+      background: #fff;
+      border-radius: 10px;
+      margin-bottom: 5px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.05);
+    }
+    .tl-emoji { font-size: 14px; flex-shrink: 0; }
+    .tl-text { font-size: 12px; color: #444; line-height: 1.4; }
+    .tl-text strong { color: #1a1a2e; font-weight: 700; }
+
+    .tl-chips-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid #f0f0f0;
+    }
+    .tl-chip {
+      background: #FDE8DF;
+      color: #E8602C;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 5px 12px;
+      border-radius: 20px;
+    }
+
+
+    /* ══════════════════════════════════════
+       OPTION C — TABBED DAYS
+    ══════════════════════════════════════ */
+    .option-c .scroll-area { padding: 0; background: #FFF9F7; }
+    .option-c .dest-hero { margin: 16px 16px 0; }
+
+    .tab-bar {
+      display: flex;
+      overflow-x: auto;
+      padding: 12px 16px 0;
+      gap: 6px;
+      background: #FFF9F7;
+      scrollbar-width: none;
+    }
+    .tab-bar::-webkit-scrollbar { display: none; }
+
+    .tab-btn {
+      flex-shrink: 0;
+      padding: 7px 14px;
+      border-radius: 20px;
+      border: none;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .tab-btn.active {
+      background: #E8602C;
+      color: #fff;
+    }
+    .tab-btn.inactive {
+      background: #fff;
+      color: #888;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.07);
+    }
+
+    .tab-content { padding: 16px; }
+
+    .tab-day-title { font-size: 15px; font-weight: 800; color: #1a1a2e; margin-bottom: 14px; }
+
+    .period-block { margin-bottom: 14px; }
+    .period-label {
+      font-size: 10px;
+      font-weight: 800;
+      color: #E8602C;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      margin-bottom: 6px;
+    }
+    .period-card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 12px 14px;
+      box-shadow: 0 1px 8px rgba(0,0,0,0.06);
+    }
+    .period-main { font-size: 13px; font-weight: 700; color: #1a1a2e; margin-bottom: 3px; }
+    .period-sub  { font-size: 12px; color: #666; line-height: 1.45; }
+
+    .tab-tips {
+      background: #FDE8DF;
+      border-radius: 12px;
+      padding: 12px 14px;
+      margin-top: 14px;
+    }
+    .tab-tips-title { font-size: 12px; font-weight: 800; color: #E8602C; margin-bottom: 6px; }
+    .tab-tips-text { font-size: 12px; color: #555; line-height: 1.5; }
+
+    .divider { border: none; border-top: 1px solid #eee; margin: 32px 0 16px; }
+  </style>
+</head>
+<body>
+
+<div class="page-title">Itinerary Format Options</div>
+<div class="page-sub">3-day luxury trip · Goa · December · Couple</div>
+
+<!-- ══════════════════════════════════════
+     OPTION A — DAY CARDS
+══════════════════════════════════════ -->
+<div class="option-label">Option A — Day Cards</div>
+<div class="option-desc">Each day is a card with a coral header. Morning / Afternoon / Evening clearly separated inside.</div>
+
+<div class="phone-frame option-a">
+  <div class="itin-header">
+    <button class="back-btn">←</button>
+    <div class="header-title">Goa</div>
+    <div style="width:36px"></div>
+  </div>
+  <div class="scroll-area">
+
+    <!-- Hero image mockup -->
+    <div class="dest-hero">
+      <div class="dest-hero-inner">
+        <div class="dest-hero-name">🏖️ Goa</div>
+        <div class="dest-hero-sub">3 days · Luxury · December</div>
+      </div>
+    </div>
+
+    <!-- Day 1 -->
+    <div class="day-card">
+      <div class="day-card-header">
+        <span class="day-badge">Day 1</span>
+        <span class="day-title">Arrival & South Goa Serenity</span>
+      </div>
+      <div class="day-card-body">
+        <div class="time-slot">
+          <div class="time-icon">🌅</div>
+          <div class="time-content">
+            <div class="time-label">Morning</div>
+            <div class="time-text">Fly in, check into <strong>Taj Exotica</strong>. Settle in, order breakfast by the infinity pool.</div>
+          </div>
+        </div>
+        <div class="time-slot">
+          <div class="time-icon">☀️</div>
+          <div class="time-content">
+            <div class="time-label">Afternoon</div>
+            <div class="time-text">Head to <strong>Colva Beach</strong> — quieter than the north, perfect for a lazy December day.</div>
+          </div>
+        </div>
+        <div class="time-slot">
+          <div class="time-icon">🌙</div>
+          <div class="time-content">
+            <div class="time-label">Evening</div>
+            <div class="time-text">Dinner at <strong>Martin's Corner</strong> — Goan prawn curry, feni cocktails, live music.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Day 2 -->
+    <div class="day-card">
+      <div class="day-card-header">
+        <span class="day-badge">Day 2</span>
+        <span class="day-title">North Goa & Nightlife</span>
+      </div>
+      <div class="day-card-body">
+        <div class="time-slot">
+          <div class="time-icon">🌅</div>
+          <div class="time-content">
+            <div class="time-label">Morning</div>
+            <div class="time-text">Explore <strong>Fort Aguada</strong> at 8am before the crowds. Views of the Arabian Sea are stunning.</div>
+          </div>
+        </div>
+        <div class="time-slot">
+          <div class="time-icon">☀️</div>
+          <div class="time-content">
+            <div class="time-label">Afternoon</div>
+            <div class="time-text"><strong>Baga Beach</strong> for water sports — parasailing or a banana boat ride. Lunch at Britto's.</div>
+          </div>
+        </div>
+        <div class="time-slot">
+          <div class="time-icon">🌙</div>
+          <div class="time-content">
+            <div class="time-label">Evening</div>
+            <div class="time-text">Sunset drinks at <strong>Tito's Lane</strong>, then dinner at Souza Lobo — legendary Goan fish thali.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Day 3 -->
+    <div class="day-card">
+      <div class="day-card-header">
+        <span class="day-badge">Day 3</span>
+        <span class="day-title">Spice Farms & Slow Goodbye</span>
+      </div>
+      <div class="day-card-body">
+        <div class="time-slot">
+          <div class="time-icon">🌅</div>
+          <div class="time-content">
+            <div class="time-label">Morning</div>
+            <div class="time-text">Spice farm tour at <strong>Sahakari Spice Farm</strong> — includes a full Goan lunch cooked on-site.</div>
+          </div>
+        </div>
+        <div class="time-slot">
+          <div class="time-icon">☀️</div>
+          <div class="time-content">
+            <div class="time-label">Afternoon</div>
+            <div class="time-text">Browse the <strong>Anjuna Flea Market</strong> for souvenirs. Last dip at Anjuna Beach.</div>
+          </div>
+        </div>
+        <div class="time-slot">
+          <div class="time-icon">🌙</div>
+          <div class="time-content">
+            <div class="time-label">Evening</div>
+            <div class="time-text">Early dinner at <strong>Pousada by the Beach</strong>. Head to airport or wrap up the trip.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tips -->
+    <div class="tips-card">
+      <div class="tips-title">💡 Travel Tips</div>
+      <div class="tip-item">December is peak season — book hotels at least 3 weeks in advance</div>
+      <div class="tip-item">Rent a scooter (₹400/day) — easiest way to move between beaches</div>
+      <div class="tip-item">Carry cash for beach shacks; most don't accept UPI</div>
+      <div class="tip-item">Water is warm (27°C) — great for swimming all 3 days</div>
+    </div>
+
+    <!-- Stay -->
+    <div class="stay-card">
+      <div class="tips-title">🏨 Where to Stay</div>
+      <div class="stay-row">
+        <span class="stay-badge luxury">Luxury</span>
+        <span class="stay-text"><strong>Taj Exotica Resort & Spa, Benaulim</strong> — private beach, butler service, ~₹18,000/night</span>
+      </div>
+      <div class="stay-row">
+        <span class="stay-badge budget">Mid</span>
+        <span class="stay-text"><strong>The Postcard Cuelim</strong> — boutique heritage property, quieter location, ~₹8,000/night</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════
+     OPTION B — TIMELINE
+══════════════════════════════════════ -->
+<div class="option-label">Option B — Timeline Strip</div>
+<div class="option-desc">Vertical timeline with activity pills. Super compact, everything visible at a glance.</div>
+
+<div class="phone-frame option-b">
+  <div class="itin-header">
+    <button class="back-btn">←</button>
+    <div class="header-title">Goa</div>
+    <div style="width:36px"></div>
+  </div>
+  <div class="scroll-area">
+
+    <div class="dest-hero">
+      <div class="dest-hero-inner">
+        <div class="dest-hero-name">🏖️ Goa</div>
+        <div class="dest-hero-sub">3 days · Luxury · December</div>
+      </div>
+    </div>
+
+    <div class="timeline">
+
+      <!-- Day 1 -->
+      <div class="timeline-day">
+        <div class="timeline-dot">1</div>
+        <div class="tl-day-label">Day 1</div>
+        <div class="tl-day-title">Arrival & South Goa Serenity</div>
+        <div class="tl-activity">
+          <span class="tl-emoji">🌅</span>
+          <span class="tl-text"><strong>Morning:</strong> Fly in → Check into <strong>Taj Exotica</strong> → Breakfast by the infinity pool</span>
+        </div>
+        <div class="tl-activity">
+          <span class="tl-emoji">☀️</span>
+          <span class="tl-text"><strong>Afternoon:</strong> <strong>Colva Beach</strong> — quiet, clean, perfect December sun</span>
+        </div>
+        <div class="tl-activity">
+          <span class="tl-emoji">🌙</span>
+          <span class="tl-text"><strong>Evening:</strong> Dinner at <strong>Martin's Corner</strong> — prawn curry + live music</span>
+        </div>
+      </div>
+
+      <!-- Day 2 -->
+      <div class="timeline-day">
+        <div class="timeline-dot">2</div>
+        <div class="tl-day-label">Day 2</div>
+        <div class="tl-day-title">North Goa & Nightlife</div>
+        <div class="tl-activity">
+          <span class="tl-emoji">🏰</span>
+          <span class="tl-text"><strong>Morning:</strong> <strong>Fort Aguada</strong> at 8am — best views before crowds arrive</span>
+        </div>
+        <div class="tl-activity">
+          <span class="tl-emoji">🏄</span>
+          <span class="tl-text"><strong>Afternoon:</strong> <strong>Baga Beach</strong> — parasailing + lunch at Britto's</span>
+        </div>
+        <div class="tl-activity">
+          <span class="tl-emoji">🍹</span>
+          <span class="tl-text"><strong>Evening:</strong> Sunset at Tito's Lane → Fish thali at <strong>Souza Lobo</strong></span>
+        </div>
+      </div>
+
+      <!-- Day 3 -->
+      <div class="timeline-day">
+        <div class="timeline-dot">3</div>
+        <div class="tl-day-label">Day 3</div>
+        <div class="tl-day-title">Spice Farms & Slow Goodbye</div>
+        <div class="tl-activity">
+          <span class="tl-emoji">🌿</span>
+          <span class="tl-text"><strong>Morning:</strong> <strong>Sahakari Spice Farm</strong> tour + on-site Goan lunch</span>
+        </div>
+        <div class="tl-activity">
+          <span class="tl-emoji">🛍️</span>
+          <span class="tl-text"><strong>Afternoon:</strong> <strong>Anjuna Flea Market</strong> + last beach dip</span>
+        </div>
+        <div class="tl-activity">
+          <span class="tl-emoji">✈️</span>
+          <span class="tl-text"><strong>Evening:</strong> Dinner at <strong>Pousada by the Beach</strong> → Airport</span>
+        </div>
+      </div>
+
+      <!-- Tips as chips -->
+      <div class="tl-chips-row">
+        <span class="tl-chip">📅 Book 3 weeks early</span>
+        <span class="tl-chip">🛵 Rent a scooter</span>
+        <span class="tl-chip">💵 Carry cash</span>
+        <span class="tl-chip">🏨 Taj Exotica (Luxury)</span>
+        <span class="tl-chip">🌊 27°C water</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════
+     OPTION C — TABBED DAYS
+══════════════════════════════════════ -->
+<div class="option-label">Option C — Tabbed Days</div>
+<div class="option-desc">One day visible at a time via tabs. Cleanest, no scroll fatigue.</div>
+
+<div class="phone-frame option-c">
+  <div class="itin-header">
+    <button class="back-btn">←</button>
+    <div class="header-title">Goa</div>
+    <div style="width:36px"></div>
+  </div>
+  <div class="scroll-area">
+
+    <div class="dest-hero" style="margin:16px 16px 0;">
+      <div class="dest-hero-inner">
+        <div class="dest-hero-name">🏖️ Goa</div>
+        <div class="dest-hero-sub">3 days · Luxury · December</div>
+      </div>
+    </div>
+
+    <div class="tab-bar">
+      <button class="tab-btn active">Day 1</button>
+      <button class="tab-btn inactive">Day 2</button>
+      <button class="tab-btn inactive">Day 3</button>
+      <button class="tab-btn inactive">💡 Tips</button>
+      <button class="tab-btn inactive">🏨 Stay</button>
+    </div>
+
+    <div class="tab-content">
+      <div class="tab-day-title">Arrival & South Goa Serenity</div>
+
+      <div class="period-block">
+        <div class="period-label">🌅 Morning</div>
+        <div class="period-card">
+          <div class="period-main">Fly in → Taj Exotica check-in</div>
+          <div class="period-sub">Settle in, grab breakfast by the infinity pool. Take it slow — this is a luxury trip.</div>
+        </div>
+      </div>
+
+      <div class="period-block">
+        <div class="period-label">☀️ Afternoon</div>
+        <div class="period-card">
+          <div class="period-main">Colva Beach</div>
+          <div class="period-sub">One of South Goa's quietest beaches. Perfect December weather — warm, breezy, and uncrowded.</div>
+        </div>
+      </div>
+
+      <div class="period-block">
+        <div class="period-label">🌙 Evening</div>
+        <div class="period-card">
+          <div class="period-main">Dinner at Martin's Corner</div>
+          <div class="period-sub">Legendary Goan restaurant. Try the prawn curry and butter garlic crab. Live music on weekends.</div>
+        </div>
+      </div>
+
+      <div class="tab-tips">
+        <div class="tab-tips-title">✨ Today's tip</div>
+        <div class="tab-tips-text">December is peak season — if you haven't booked dinner reservations, call ahead. Martin's Corner fills up fast.</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>
