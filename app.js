@@ -7,8 +7,8 @@
    ============================================ */
 
 // ── CONFIG ──
-const GEMINI_API_KEY    = 'AIzaSyADfVekTwWPmCrVotlKbr0DCyJCcNcPlUc';
-const GEMINI_ENDPOINT   = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
+// Gemini calls go through your Cloudflare Worker — paste your Worker URL below
+const WORKER_URL        = 'https://rapid-silence-56d0.nandanjha992.workers.dev/';
 const UNSPLASH_KEY      = 'PX6e5PNDMi2p9s9T4sfFDZ73WQ_o6k4hziDAb7_S9bE';
 const UNSPLASH_ENDPOINT = 'https://api.unsplash.com/search/photos';
 
@@ -253,11 +253,11 @@ Return ONLY a valid JSON array. No explanation, no markdown, no text before or a
 // ─────────────────────────────────────────────
 
 async function callGemini(prompt) {
-  if (!GEMINI_API_KEY || GEMINI_API_KEY === 'YOUR_GEMINI_KEY_HERE') {
+  if (!WORKER_URL || WORKER_URL === 'YOUR_CLOUDFLARE_WORKER_URL_HERE') {
     return getPlaceholderDestinations();
   }
 
-  const response = await fetch(`${GEMINI_ENDPOINT}?key=${GEMINI_API_KEY}`, {
+  const response = await fetch(WORKER_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -596,7 +596,7 @@ RULES:
 async function generateItinerary(dest) {
   try {
     const prompt   = buildItineraryPrompt(dest);
-    const response = await fetch(`${GEMINI_ENDPOINT}?key=${GEMINI_API_KEY}`, {
+    const response = await fetch(WORKER_URL, {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify({
@@ -784,7 +784,7 @@ async function sendChatMessage(overrideText) {
   scrollChatToBottom();
 
   try {
-    const response = await fetch(`${GEMINI_ENDPOINT}?key=${GEMINI_API_KEY}`, {
+    const response = await fetch(WORKER_URL, {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify({
