@@ -7,10 +7,9 @@
    ============================================ */
 
 // ── CONFIG ──
-// Keys are loaded from config.js (gitignored). See config.example.js for setup.
-const GEMINI_API_KEY    = window.GEMINI_API_KEY  || '';
+const GEMINI_API_KEY    = 'AIzaSyADfVekTwWPmCrVotlKbr0DCyJCcNcPlUc';
 const GEMINI_ENDPOINT   = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
-const UNSPLASH_KEY      = window.UNSPLASH_KEY    || '';
+const UNSPLASH_KEY      = 'PX6e5PNDMi2p9s9T4sfFDZ73WQ_o6k4hziDAb7_S9bE';
 const UNSPLASH_ENDPOINT = 'https://api.unsplash.com/search/photos';
 
 // ── USER STATE ──
